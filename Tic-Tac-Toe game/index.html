@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic Tac Toe</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/alpinejs" defer></script>
+  <link href='https://fonts.googleapis.com/css?family=Coiny' rel='stylesheet'>
+  <style>
+    body {
+      font-family: 'Coiny', cursive;
+    }
+    .grid-bg {
+      background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+     /* Circle animation */
+     @keyframes growCircle {
+      0% {
+        transform: scale(0);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(10); /* Make sure it grows large enough to cover the screen */
+        opacity: 0;
+      }
+    }
+
+    .circle-grow {
+      animation: growCircle 1.5s ease-out forwards;
+      transform-origin: center;
+    }
+
+    /* Fade-in effect for the logo */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .fade-in {
+      opacity: 0;
+      animation: fadeIn 1s ease-out forwards;
+      animation-delay: 1s;
+    }
+  </style>
+</head>
+<body class="bg-black flex justify-center items-center min-h-screen">
+
+  <!-- Mobile Container -->
+  <div class="w-[320px] h-[640px] rounded-[40px] p-6 grid-bg bg-[#4c1d95] text-white relative overflow-hidden"
+       x-data="{ showSplash: true, level: '' }"
+       x-init="setTimeout(() => showSplash = false, 2500)">
+
+     <!-- Splash Screen -->
+     <div x-show="showSplash" x-transition.opacity
+     class="absolute inset-0 flex items-center justify-center bg-[#4c1d95] grid-bg z-50">
+  <!-- Circle Animation -->
+  <div class="absolute w-24 h-24 rounded-full bg-blue-700 circle-grow"></div>
+  
+  <!-- Logo centered on Splash -->
+  <div class="text-center text-white space-y-4">
+   
+    <div class="fade-in">
+      <img class="size-xl" 
+      src="logo.png" alt="Logo" class="w-32 mx-auto "> <!-- Adjust width of the logo as needed -->
+    </div>
+    
+    <p class="text-sm text-white/70">Loading...</p>
+  </div>
+</div>
+
+
+    <!-- Welcome Screen -->
+    <div class="text-center space-y-6 mt-10" x-show="!showSplash" x-transition.opacity>
+      
+      <!-- Logo -->
+      <div class="px-10">
+        <img src="logo.png" alt="Logo">
+      </div>
+
+      <!-- Welcome Text -->
+      <h2 class="text-5xl font-bold text-white drop-shadow-[0_4px_3px_#FF407B]">Welcome</h2>
+      <p class="text-white text-lg">Choose your level</p>
+
+      <!-- Buttons -->
+      <div class="space-y-4">
+        <button 
+          class="w-full py-3 bg-pink-600 hover:bg-pink-700 rounded-full text-white text-lg transition drop-shadow-[0_4px_5px_#000000]"
+          @click="window.location.href='easy.html'">
+          Easy
+        </button>
+        <button 
+          class="w-full py-3 bg-pink-600 hover:bg-pink-700 rounded-full text-white text-lg transition drop-shadow-[0_4px_5px_#000000]"
+          @click="window.location.href='medium.html'">
+          Medium
+        </button>
+        <button 
+          class="w-full py-3 bg-pink-600 hover:bg-pink-700 rounded-full text-white text-lg transition drop-shadow-[0_4px_5px_#000000]"
+          @click="level = 'Hard'">
+          Hard
+        </button>
+      </div>
+
+      <!-- Confirmation Output -->
+      <template x-if="level">
+        <p class="mt-6 text-white font-mono">You selected: <span class="font-bold" x-text="level"></span></p>
+      </template>
+
+    </div>
+  </div>
+
+
+  <script>
+    function ticTacToe() {
+      return {
+        showSplash: true,
+        showLevelSelection: false,
+        board: Array(9).fill(''),
+        currentPlayer: 'X',
+        winner: null,
+        message: "Player X's turn",
+
+        // Start the game after selecting level
+        startGame(level) {
+          this.showSplash = false;
+          this.showLevelSelection = false;
+          this.message = `Player X's turn - Level: ${level}`;
+        },
+
+        // Make a move
+        makeMove(index) {
+          if (this.board[index] || this.winner) return;
+
+          this.board.splice(index, 1, this.currentPlayer);
+          if (this.checkWinner()) {
+            this.winner = this.currentPlayer;
+            this.message = `Player ${this.currentPlayer} wins! 🎉`;
+          } else if (this.board.every(cell => cell !== '')) {
+            this.message = "It's a draw!";
+          } else {
+            this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
+            this.message = `Player ${this.currentPlayer}'s turn`;
+          }
+        },
+
+        // Check for a winner
+        checkWinner() {
+          const winPatterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+          ];
+
+          return winPatterns.some(([a, b, c]) =>
+            this.board[a] && this.board[a] === this.board[b] && this.board[a] === this.board[c]
+          );
+        },
+
+        // Reset the game
+        resetGame() {
+          this.board = Array(9).fill('');
+          this.currentPlayer = 'X';
+          this.winner = null;
+          this.message = "Player X's turn";
+        }
+      };
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic Tac Toe - Easy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/alpinejs" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Coiny&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Coiny', cursive;
+    }
+    .grid-bg {
+      background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .dice {
+      width: 60px;
+      height: 60px;
+      background: #fff;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 4px;
+      padding: 8px;
+      border-radius: 12px;
+      animation: roll 2s infinite ease-in-out;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      background: #4c1d95;
+      border-radius: 50%;
+      place-self: center;
+    }
+    @keyframes roll {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(90deg); }
+      50% { transform: rotate(180deg); }
+      75% { transform: rotate(270deg); }
+     }
+     .glow {
+    background-color: #4ade80 !important; /* green-400 */
+   border: 2px solid #bbf7d0; /* green-100 */
+   box-shadow: 0 0 10px #4ade80, 0 0 20px #22c55e;
+    animation: pop 0.6s ease-in-out infinite alternate;
+    }
+
+@keyframes pop {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+  </style>
+</head>
+<body x-data="ticTacToeApp()" x-init="init()" class="bg-black flex justify-center items-center min-h-screen">
+  <div class="w-[320px] h-[640px] rounded-[40px] p-6 grid-bg bg-[#4c1d95] text-white relative overflow-hidden">
+    
+    <!-- Splash Screen -->
+    <div x-show="showSplash" x-transition.opacity class="absolute inset-0 flex items-center justify-center bg-[#4c1d95] grid-bg z-50">
+      <div class="text-center text-white space-y-4">
+        <div class="dice mx-auto">
+          <div class="dot"></div><div></div><div class="dot"></div>
+          <div></div><div class="dot"></div><div></div>
+          <div class="dot"></div><div></div><div class="dot"></div>
+        </div>
+        <h1 class="text-3xl text-yellow-400 tracking-wider drop-shadow-[0_2px_4px_#000]">Rolling Dice...</h1>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+<div x-show="!showSplash" class="text-center space-y-4 mt-2">
+
+  <!-- Header Row: Arrow and Restart Button -->
+  <div class="flex justify-between items-center mb-1">
+    <!-- Back Arrow -->
+    <button @click="window.location.href = 'index.html'" class="text-white text-2xl">
+      ←
+    </button>
+    <!-- Restart Button -->
+    <button @click="resetGame" class="bg-pink-500 px-3 py-1 rounded-full text-sm text-white hover:bg-pink-400">Restart</button>
+  </div>
+
+  <!-- Level Display -->
+  <div class="text-lg text-yellow-300 mb-2">Level: <span class="text-white text-xl">Easy</span></div>
+
+  <!-- Turn Display -->
+  <p class="text-white text-lg">Turn: <span x-text="turn" class="text-yellow-300"></span></p>
+
+
+      <!-- Game Board -->
+      <div class="grid grid-cols-3 gap-2 w-full max-w-xs mx-auto mt-10 ">
+        <template x-for="(cell, index) in board" :key="index">
+          <div 
+            class="w-20 h-20 rounded-lg flex items-center justify-center text-3xl cursor-pointer select-none transition bg-white/10 hover:bg-white/20"
+            :class="winningCombo.includes(index) ? 'glow' : ''"
+            @click="makeMove(index)"
+            x-text="cell"
+          ></div>
+        </template>
+        
+      </div>
+
+  <!-- Winner or Draw Message -->
+<template x-if="winner">
+  <div class="text-xl text-green-300 font-medium mt-4">
+    <span x-text="winner === 'Draw' ? 'It\'s a Draw! 😞 Wanna play again?' : winner + ' wins!'"></span>
+  </div>
+</template>
+
+    
+  <script>
+    function ticTacToeApp() {
+      return {
+        showSplash: true,
+        turn: 'X',
+        winner: '',
+        board: Array(9).fill(''),
+        winningCombo: [],
+        init() {
+          setTimeout(() => this.showSplash = false, 2000);
+        },
+
+        makeMove(index) {
+  if (this.board[index] || this.winner) return;
+  this.board[index] = this.turn;
+  
+  if (this.checkWinner()) {
+    this.winner = this.turn;
+    this.launchConfetti();
+  } else if (this.board.every(cell => cell !== '')) {
+    // Check for draw condition if all cells are filled
+    this.winner = 'Draw';
+  } else {
+    this.turn = this.turn === 'X' ? 'O' : 'X';
+  }
+},
+
+
+        checkWinner() {
+  const combos = [
+    [0,1,2],[3,4,5],[6,7,8], // rows
+    [0,3,6],[1,4,7],[2,5,8], // cols
+    [0,4,8],[2,4,6]          // diagonals
+  ];
+  for (let combo of combos) {
+    const [a, b, c] = combo;
+    if (this.board[a] && this.board[a] === this.board[b] && this.board[b] === this.board[c]) {
+      this.winningCombo = combo;
+      return true;
+    }
+  }
+  return false;
+},
+
+
+        resetGame() {
+          this.turn = 'X';
+          this.winner = '';
+          this.board = Array(9).fill('')
+          this.winningCombo = [];;
+        },
+
+        launchConfetti() {
+          confetti({
+            particleCount: 150,
+            spread: 120,
+            origin: { y: 0.6 },
+            scalar: 1.2
+          });
+        }
+      }
+    }
+  </script>
+</body>
+</html>
