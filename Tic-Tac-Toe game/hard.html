@@ -104,14 +104,15 @@
         winner: '',
         board: Array(9).fill(''),
         winningCombo: [],
+  
         init() {
           setTimeout(() => this.showSplash = false, 2000);
         },
-
+  
         makeMove(index) {
           if (this.board[index] || this.winner || this.turn !== 'X') return;
           this.board[index] = 'X';
-
+  
           if (this.checkWinner()) {
             this.winner = 'X';
             this.launchConfetti();
@@ -122,14 +123,14 @@
             setTimeout(() => this.aiMove(), 300);
           }
         },
-
+  
         aiMove() {
           if (this.winner || this.turn !== 'O') return;
-
-          const bestMove = this.minimax(this.board, 'O').index;
-          if (bestMove !== undefined) {
+  
+          const bestMove = this.findBestMove();
+          if (bestMove !== undefined && bestMove !== -1) {
             this.board[bestMove] = 'O';
-
+  
             if (this.checkWinner()) {
               this.winner = 'O';
               this.launchConfetti();
@@ -140,35 +141,55 @@
             }
           }
         },
-
+  
+        findBestMove() {
+          // Introduce a 20% chance to make a random (flawed) move
+          if (Math.random() < 0.2) {
+            const emptyIndices = this.board
+              .map((val, idx) => val === '' ? idx : null)
+              .filter(val => val !== null);
+            return emptyIndices[Math.floor(Math.random() * emptyIndices.length)] ?? -1;
+          }
+  
+          // Otherwise, play optimally
+          const bestMove = this.minimax(this.board, 'O').index;
+          return bestMove;
+        },
+  
         minimax(newBoard, player) {
-          const availSpots = newBoard.map((val, idx) => val === '' ? idx : null).filter(val => val !== null);
-
-          if (this.checkWin(newBoard, 'X')) return { score: -10 };
-          if (this.checkWin(newBoard, 'O')) return { score: 10 };
+          const huPlayer = 'X';
+          const aiPlayer = 'O';
+  
+          const availSpots = newBoard
+            .map((val, idx) => val === '' ? idx : null)
+            .filter(val => val !== null);
+  
+          const winner = this.checkWinnerForMinimax(newBoard);
+          if (winner === huPlayer) return { score: -10 };
+          if (winner === aiPlayer) return { score: 10 };
           if (availSpots.length === 0) return { score: 0 };
-
+  
           const moves = [];
-
+  
           for (let i = 0; i < availSpots.length; i++) {
             const move = {};
             move.index = availSpots[i];
             newBoard[availSpots[i]] = player;
-
-            const result = this.minimax(newBoard, player === 'O' ? 'X' : 'O');
+  
+            const result = this.minimax(newBoard, player === aiPlayer ? huPlayer : aiPlayer);
             move.score = result.score;
-
+  
             newBoard[availSpots[i]] = '';
             moves.push(move);
           }
-
+  
           let bestMove;
-          if (player === 'O') {
+          if (player === aiPlayer) {
             let bestScore = -Infinity;
             for (let i = 0; i < moves.length; i++) {
               if (moves[i].score > bestScore) {
                 bestScore = moves[i].score;
-                bestMove = i;
+                bestMove = moves[i];
               }
             }
           } else {
@@ -176,28 +197,34 @@
             for (let i = 0; i < moves.length; i++) {
               if (moves[i].score < bestScore) {
                 bestScore = moves[i].score;
-                bestMove = i;
+                bestMove = moves[i];
               }
             }
           }
-
-          return moves[bestMove];
+  
+          return bestMove;
         },
-
-        checkWin(board, player) {
+  
+        checkWinnerForMinimax(board) {
           const combos = [
-            [0,1,2],[3,4,5],[6,7,8],
-            [0,3,6],[1,4,7],[2,5,8],
-            [0,4,8],[2,4,6]
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
           ];
-          return combos.some(([a, b, c]) => board[a] === player && board[b] === player && board[c] === player);
+          for (let combo of combos) {
+            const [a, b, c] = combo;
+            if (board[a] && board[a] === board[b] && board[b] === board[c]) {
+              return board[a];
+            }
+          }
+          return null;
         },
-
+  
         checkWinner() {
           const combos = [
-            [0,1,2],[3,4,5],[6,7,8],
-            [0,3,6],[1,4,7],[2,5,8],
-            [0,4,8],[2,4,6]
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
           ];
           for (let combo of combos) {
             const [a, b, c] = combo;
@@ -208,14 +235,14 @@
           }
           return false;
         },
-
+  
         resetGame() {
           this.turn = 'X';
           this.winner = '';
           this.board = Array(9).fill('');
           this.winningCombo = [];
         },
-
+  
         launchConfetti() {
           confetti({
             particleCount: 150,
@@ -227,5 +254,6 @@
       }
     }
   </script>
+  
 </body>
 </html>
